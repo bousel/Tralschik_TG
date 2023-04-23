@@ -24,7 +24,7 @@ class Cell:
 
 class GamePole:
 
-    def __init__(self, n=10, m=6):
+    def __init__(self, n=10, m=6) -> None:
         """
         Создает игровое поле размером n*n с m минами
         int n - размерность игрового поля
@@ -43,8 +43,29 @@ class GamePole:
                     if 0 <= r < n and 0 <= c < n and not self.pole[r][c].is_mine:
                         self.pole[r][c].around_mines += 1
     
-    def show(self):
+    def show(self) -> str:
         return "\n".join([" ".join([str(cell) for cell in row]) for row in self.pole])
 
+    def open(self, x, y):
+        cell = self.pole[y][x]
+        if cell.is_opened:
+            return f"Ячейка ({x};{y}) уже открыта"
+        else:
+            if cell.is_mine:
+                f"Вы подорвались на мине. Игра окончена"
+            else:
+                cell.is_opened = True
+                if cell.around_mines == 0:
+                    for r in range(x-1, x+2):
+                        for c in range(y-1, y+2):
+                            if 0 <= r < self.n and 0 <= c < self.n and not self.pole[r][c].is_mine:
+                                self.open(r, c)
+                    
+
+
+
 m = GamePole()
-print(m.show())
+while True:
+    print(m.show())
+    x, y = map(int, input().split())
+    m.open(x-1, y-1)

@@ -1,3 +1,6 @@
+import telebot
+
+
 speech = [
     """
     Это простой бот для игры в сапера.
@@ -17,11 +20,10 @@ speech = [
 ]
 
 
-import telebot
-
 token = open("token.txt").read()
-
 bot = telebot.TeleBot(token)
+
+
 fl_play:bool = False
 
 @bot.message_handler(commands=["start", "начало", "начинай", "стартуй"])
@@ -49,6 +51,7 @@ def msger(message):
         bot.send_message(message.chat.id, "Игра сейчас начата")
     else:
         bot.send_message(message.chat.id, "Игра сейчас не начата")
+
 
 
 bot.polling()

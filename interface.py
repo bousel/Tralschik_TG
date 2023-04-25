@@ -9,10 +9,10 @@ speech = [
     /play - для игры
     """,
     """
-    Тут будет помощь. Потом.
+    Тут будет инструкция к игре. Потом.
     """,
     """
-    Сыграем?
+    Начали играть
     """,
     """
     Прекратили играть
@@ -23,8 +23,7 @@ speech = [
 token = open("token.txt").read()
 bot = telebot.TeleBot(token)
 
-
-fl_play:bool = False
+users = {}
 
 @bot.message_handler(commands=["start", "начало", "начинай", "стартуй"])
 def start(message):
@@ -36,21 +35,28 @@ def help(message):
 
 @bot.message_handler(commands=["play"])
 def play(message):
-    global fl_play
-    fl_play = True
-    bot.send_message(message.chat.id, speech[2])
+    chat_id = message.chat.id
+    users[chat_id] = True
+    bot.send_message(chat_id, speech[2])
 
 @bot.message_handler(commands=["stop"])
 def stop(message):
-    global fl_play
-    fl_play = False
+    chat_id = message.chat.id
+    users[chat_id] = False
+    bot.send_message(message.chat.id, speech[3])
 
 @bot.message_handler(func=lambda message: True)
 def msger(message):
-    if fl_play:
-        bot.send_message(message.chat.id, "Игра сейчас начата")
+    chat_id = message.chat.id
+    if chat_id not in users or not users[chat_id]:
+        bot.send_message(chat_id, "Игра сейчас не начата")
     else:
-        bot.send_message(message.chat.id, "Игра сейчас не начата")
+        try:
+            row, clmn = map(int, message.text.split())
+            print(row, clmn)
+        except ValueError:
+            bot.send_message(chat_id, "Введите два числа (через пробел!!!)")
+        
 
 
 

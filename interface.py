@@ -1,4 +1,5 @@
 import telebot
+import main as GAME
 
 
 speech = [
@@ -36,28 +37,57 @@ def help(message):
 @bot.message_handler(commands=["play"])
 def play(message):
     chat_id = message.chat.id
-    users[chat_id] = True
-    bot.send_message(chat_id, speech[2])
+    if chat_id in users:
+        bot.send_message(chat_id, "Игра уже начата")
+    else:
+        game = GAME.GamePole()
+        users[chat_id] = game
+        bot.send_message(chat_id,
+            f"```\n{users[chat_id].show()}\n```\nВведите координаты ячейки",
+            parse_mode="Markdown")
 
 @bot.message_handler(commands=["stop"])
 def stop(message):
     chat_id = message.chat.id
-    users[chat_id] = False
-    bot.send_message(message.chat.id, speech[3])
+    if chat_id not in users:
+        bot.send_message(chat_id, "Игра не начата")
+    else:
+        bot.send_message(chat_id, "Вы хотите закончить игру?")
+        bot.register_next_step_handler(message, lambda msg: finisher(msg))
+def finisher(msg):
+    chat_id = msg.chat.id
+    if msg.text == "Да":
+        bot.send_message(chat_id,
+            f"```\n{users[chat_id].gameover()}\n```\nИгра окончена",
+            parse_mode="Markdown")
+        users.pop(chat_id)
 
 @bot.message_handler(func=lambda message: True)
 def msger(message):
     chat_id = message.chat.id
-    if chat_id not in users or not users[chat_id]:
-        bot.send_message(chat_id, "Игра сейчас не начата")
+    if chat_id not in users:
+        bot.reply_to(message, "Держите в курсе.")
     else:
         try:
             row, clmn = map(int, message.text.split())
-            print(row, clmn)
+            rs = users[chat_id].open(row-1, clmn-1)
+            if "уже открыта" in rs:
+                bot.send_message(chat_id, "Введите координаты неоткрытой ячейки")
+            elif "подорвались" in rs:
+                bot.send_message(chat_id,
+                    f"```\n{users[chat_id].gameover()}\n```\nВы подорвались на мине.\nИгра окончена",
+                    parse_mode="Markdown")
+            elif "все ячейки" in rs:
+                bot.send_message(chat_id,
+                    f"```\n{users[chat_id].gameover()}\n```\nВы открыли все ячейки.\nИгра окончена",
+                    parse_mode="Markdown")
+            else:
+                bot.send_message(chat_id,
+                    f"```\n{users[chat_id].show()}\n```\nВведите координаты ячейки",
+                    parse_mode="Markdown")
         except ValueError:
-            bot.send_message(chat_id, "Введите два числа (через пробел!!!)")
-        
-
-
+            bot.send_message(chat_id, "Соблюдайте формат!")
+        except IndexError:
+            bot.send_message(chat_id, "Требуется ввести правильные координаты")
 
 bot.polling()

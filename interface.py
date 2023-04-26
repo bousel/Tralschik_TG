@@ -10,13 +10,12 @@ speech = [
     /play - для игры
     """,
     """
-    Тут будет инструкция к игре. Потом.
-    """,
-    """
-    Начали играть
-    """,
-    """
-    Прекратили играть
+    Инструкция к игре.
+    Здесь все предельно просто: При вводе команды /play бот создаст вам игру. 
+    Размер игрового поля - 10х10, количество мин на поле - 7шт. 
+    После начала игры бот будет запрашивать координаты в формате "x y", например: 1 1, 8 4, и так далее.
+    Координаты - целые числа от 1 до 10.
+    В будущем бот будет дорабатываться
     """
 ]
 
@@ -56,7 +55,7 @@ def stop(message):
         bot.register_next_step_handler(message, lambda msg: finisher(msg))
 def finisher(msg):
     chat_id = msg.chat.id
-    if msg.text == "Да":
+    if msg.text.lower()[:3:] in ["да", "ага", "ну", "+", "yes", "даа", "есс"]:
         bot.send_message(chat_id,
             f"```\n{users[chat_id].gameover()}\n```\nИгра окончена",
             parse_mode="Markdown")
@@ -71,16 +70,18 @@ def msger(message):
         try:
             row, clmn = map(int, message.text.split())
             rs = users[chat_id].open(row-1, clmn-1)
-            if "уже открыта" in rs:
+            if "уже открыта" in rs[0]:
                 bot.send_message(chat_id, "Введите координаты неоткрытой ячейки")
-            elif "подорвались" in rs:
+            elif "подорвались" in rs[0]:
                 bot.send_message(chat_id,
                     f"```\n{users[chat_id].gameover()}\n```\nВы подорвались на мине.\nИгра окончена",
                     parse_mode="Markdown")
-            elif "все ячейки" in rs:
+                users.pop(chat_id)
+            elif "все ячейки" in rs[0]:
                 bot.send_message(chat_id,
                     f"```\n{users[chat_id].gameover()}\n```\nВы открыли все ячейки.\nИгра окончена",
                     parse_mode="Markdown")
+                users.pop(chat_id)
             else:
                 bot.send_message(chat_id,
                     f"```\n{users[chat_id].show()}\n```\nВведите координаты ячейки",
